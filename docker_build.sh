@@ -105,11 +105,13 @@ ar rcs binarylibs/kernel/dependency/onnxruntime/comm/lib/libonnxruntime.a /tmp/o
 echo "void tokenizers_stub(){}" | gcc -xc -c -fPIC -o /tmp/tokenizers.o - 2>/dev/null || true
 ar rcs binarylibs/kernel/dependency/tokenizers/comm/lib/libtokenizers.a /tmp/tokenizers.o 2>/dev/null || true
 
-# 5. Configure
-if [ ! -f config.status ]; then
+# 5. Configure (re-run if options changed)
+if [ ! -f config.status ] || ! grep -q "enable-lite-mode" config.status 2>/dev/null; then
+    [ -f config.status ] && make distclean 2>/dev/null || true
     CC="ccache gcc" CXX="ccache g++" ./configure --prefix=/openGauss-server/dest --enable-debug --enable-cassert \
         --disable-thread-safety --with-readline --enable-lite-mode \
-        --disable-llvm --without-python --without-gssapi
+        --disable-llvm --disable-jemalloc \
+        --without-python --without-gssapi
 fi
 
 # 6. Build & install

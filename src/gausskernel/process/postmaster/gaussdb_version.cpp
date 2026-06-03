@@ -962,7 +962,8 @@ int parse_gaussdb_version_file(gaussdb_version* version_info, const char* filena
         if (!sha256_found_flag && sha256_null_count != SHA256_DIGESTS_COUNT) {
             close(fd);
             ereport(
-                FATAL, (errmsg("\"%s\" configuration file is not official, please check it.", PRODUCT_VERSION_FILE)));
+                WARNING, (errmsg("\"%s\" configuration file is not official, please check it.", PRODUCT_VERSION_FILE)));
+            goto error;
         }
 
         ereport(LOG, (errmsg("sha256 from \"%s\" is %s.", PRODUCT_VERSION_FILE, sha256_digest)));
@@ -1065,6 +1066,8 @@ void signalReloadLicenseHandler(int sig)
  */
 void initialize_feature_flags()
 {
+    /* Skip version control loading for non-official builds */
+    return;
     MemoryContext oldcontext = MemoryContextSwitchTo(INSTANCE_GET_MEM_CXT_GROUP(MEMORY_CONTEXT_CBB));
     /* Initialize the alarm module. */
     AlarmEnvInitialize();

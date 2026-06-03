@@ -143,3 +143,29 @@ int sscanf_s(const char *buffer, const char *format, ...) { va_list args; va_sta
 int vsscanf_s(const char *buffer, const char *format, va_list arglist) { return vsscanf(buffer, format, arglist); }
 int fscanf_s(FILE *stream, const char *format, ...) { va_list args; va_start(args, format); int ret = vfscanf(stream, format, args); va_end(args); return ret; }
 int vfscanf_s(FILE *stream, const char *format, va_list arglist) { return vfscanf(stream, format, arglist); }
+
+/* Additional securec functions needed by openGauss */
+errno_t memcpy_sOptAsm(void *dest, size_t destMax, const void *src, size_t count)
+{
+    return memcpy_s(dest, destMax, src, count);
+}
+errno_t snprintf_truncated_s(char *strDest, size_t destMax, const char *format, ...)
+{
+    va_list args; va_start(args, format);
+    int ret = vsnprintf(strDest, destMax, format, args); va_end(args);
+    return (ret < 0) ? EINVAL : 0;
+}
+errno_t vsnprintf_truncated_s(char *strDest, size_t destMax, const char *format, va_list arglist)
+{
+    int ret = vsnprintf(strDest, destMax, format, arglist);
+    return (ret < 0) ? EINVAL : 0;
+}
+void strcpy_error(const char *src, char *dst, size_t dst_size)
+{
+    if (dst != NULL && dst_size > 0) {
+        size_t slen = src ? strnlen(src, dst_size - 1) : 0;
+        memcpy(dst, src ? src : "", slen);
+        dst[slen] = '\0';
+    }
+}
+errno_t memset_sOptAsm(void *d, size_t dm, int c, size_t n) { return memset_s(d,dm,c,n); }

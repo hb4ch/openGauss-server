@@ -16512,3 +16512,22 @@ int SSCountAndPrintChildren(int target)
 
     return (cnt - ignore_cnt);
 }
+
+#ifdef ENABLE_LITE_MODE
+#include "fmgr.h"
+Datum gs_get_preparse_location(PG_FUNCTION_ARGS){    PG_RETURN_NULL();}
+
+/* Stubs for functions excluded in lite mode */
+Selectivity dependencies_clauselist_selectivity(PlannerInfo *root, const List *clauses, int varRelid,
+    JoinType jointype, SpecialJoinInfo *sjinfo, const RelOptInfo *rel, Bitmapset **estimatedclauses)
+{
+    (void)root; (void)clauses; (void)varRelid; (void)jointype;
+    (void)sjinfo; (void)rel; (void)estimatedclauses; return 0;
+}
+void analyze_compute_dependencies(Relation onerel, int *slot_idx, const char *tableName,
+    AnalyzeSampleTableSpecInfo *spec, VacAttrStats *stats)
+{
+    (void)onerel; (void)slot_idx; (void)tableName; (void)spec; (void)stats;
+}
+void statext_dependencies_deserialize(bytea *data) { (void)data; }
+#endif

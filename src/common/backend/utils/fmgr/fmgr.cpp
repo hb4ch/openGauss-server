@@ -3123,3 +3123,9 @@ void CopyCursorInfoData(Cursor_Data* target_cursor, Cursor_Data* Source_cursor)
     target_cursor->null_fetch = Source_cursor->null_fetch;
     target_cursor->cur_dno = Source_cursor->cur_dno;
 }
+
+#ifdef ENABLE_LITE_MODE
+extern "C" Datum gs_get_preparse_location(PG_FUNCTION_ARGS);
+Datum gs_get_preparse_location(PG_FUNCTION_ARGS) { PG_RETURN_NULL(); }
+#endif
+

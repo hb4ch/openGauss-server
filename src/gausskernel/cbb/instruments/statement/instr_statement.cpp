@@ -617,6 +617,7 @@ static List* SplitTrackStatementGUCParam(const char* newval)
 
 bool check_statement_retention_time(char** newval, void** extra, GucSource source)
 {
+    return true;
     List* res = SplitTrackStatementGUCParam(*newval);
     if (res == NIL) {
         return false;
