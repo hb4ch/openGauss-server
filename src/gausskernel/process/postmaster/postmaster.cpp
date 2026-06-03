@@ -14848,7 +14848,9 @@ int GaussDbAuxiliaryThreadMain(knl_thread_arg* arg)
             proc_exit(1);
             break;
         case BARRIER_PREPARSE:
+#ifndef ENABLE_LITE_MODE
             BarrierPreParseMain();
+#endif
             proc_exit(1);
             break;
 #ifdef ENABLE_MULTIPLE_NODES

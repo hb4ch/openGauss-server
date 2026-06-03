@@ -3,15 +3,14 @@ set -e
 
 export CODE_BASE=$(pwd)
 export GAUSSHOME=$CODE_BASE/dest
-export BINARYLIBS=$CODE_BASE/openGauss-third_party_binarylibs_Centos7.6_x86_64
 mkdir -p $GAUSSHOME
 
 CONF_OPTS="--prefix=$GAUSSHOME \
-            --with-3rdpartydir=$BINARYLIBS \
             --enable-debug \
             --enable-cassert \
             --disable-thread-safety \
             --with-readline \
+            --enable-lite-mode \
             --disable-llvm \
             --without-python \
             --without-gssapi"
@@ -22,7 +21,7 @@ export CXXFLAGS="-mno-avx512f -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx
 echo "Configuring openGauss..."
 ./configure $CONF_OPTS
 
-# Create a pre-generated gsqlerr_errmsg.h stub so the build doesn't fail
+# Pre-generate gsqlerr_errmsg.h and errmsg.h stubs
 cat > src/bin/gsqlerr/gsqlerr_errmsg.h << 'STUB'
 #ifndef ERRMSG_H
 #define ERRMSG_H
@@ -52,34 +51,25 @@ static gsqlerr_err_msg_t g_mppdb_errors[] = {{0, "", 0, {0}}};
 #endif
 STUB2
 
-# Also pre-build scanEreport to satisfy Make dependencies
-echo "Pre-building scanEreport..."
+# Pre-build scanEreport to satisfy Make dependencies
 cd src/bin/gsqlerr
 g++ -std=c++11 -c -I ../../../src/include -I ../../../src/include/portability \
-    -I /openGauss-server/openGauss-third_party_binarylibs_Centos7.6_x86_64/kernel/dependency/openssl/comm/include \
-    -I /openGauss-server/openGauss-third_party_binarylibs_Centos7.6_x86_64/kernel/platform/Huawei_Secure_C/comm/include \
+    -I /openGauss-server/binarylibs/kernel/dependency/openssl/comm/include \
     -o scanEreport.o scanEreport.cpp 2>&1 && \
-g++ -std=c++11 -L /openGauss-server/openGauss-third_party_binarylibs_Centos7.6_x86_64/kernel/platform/Huawei_Secure_C/comm/lib \
+g++ -std=c++11 -L /openGauss-server/binarylibs/kernel/platform/Huawei_Secure_C/comm/lib \
     -o scanEreport scanEreport.o -lsecurec -lstdc++ 2>&1 && \
-echo "scanEreport built successfully" || echo "scanEreport build failed (non-critical)"
+echo "scanEreport built" || echo "scanEreport skip (non-critical)"
 cd /openGauss-server
 
-echo "Building openGauss..."
-# Create stub libraries for ONNX and Tokenizers components (not in CentOS binarylibs)
-BLOBASE="/openGauss-server/openGauss-third_party_binarylibs_Centos7.6_x86_64"
-for libdir in "kernel/dependency/onnxruntime/comm/lib" "kernel/dependency/tokenizers/comm/lib" "kernel/dependency/onnx_wrapper/comm/lib"; do
-    mkdir -p "${BLOBASE}/${libdir}"
+# Create stub libraries for ONNX/Tokenizers
+mkdir -p binarylibs/kernel/dependency/onnxruntime/comm/lib
+mkdir -p binarylibs/kernel/dependency/tokenizers/comm/lib
+for lib in onnxruntime tokenizers; do
+    echo "void ${lib}_stub(){}" | gcc -xc -c -fPIC -o /tmp/${lib}.o - && ar rcs binarylibs/kernel/dependency/${lib}/comm/lib/lib${lib}.a /tmp/${lib}.o
 done
-for libname in onnxruntime tokenizers; do
-    echo "void ${libname}_stub(void){}" > /tmp/${libname}_stub.c
-    gcc -c -fPIC -o /tmp/${libname}_stub.o /tmp/${libname}_stub.c
-    ar rcs "${BLOBASE}/kernel/dependency/${libname}/comm/lib/lib${libname}.a" /tmp/${libname}_stub.o
-done
-# onnx_wrapper is linked without explicit -L path, put it in onnxruntime lib dir
 cat > /tmp/onnx_stubs.c << 'ONNXEOF'
 #include <stddef.h>
-typedef void* ONNXEnvHandle;
-typedef void* ONNXModelHandle;
+typedef void* ONNXEnvHandle; typedef void* ONNXModelHandle;
 ONNXEnvHandle ONNXEnvCreate() { return NULL; }
 void ONNXEnvRelease(ONNXEnvHandle h) { (void)h; }
 ONNXModelHandle ONNXLoadModel(ONNXEnvHandle e, const char* m, const char* t, int* d) { (void)e;(void)m;(void)t;if(d)*d=768;return NULL; }
@@ -89,7 +79,12 @@ int ONNXEmbeddingInferBatch(ONNXModelHandle h, char** t, int n, float** e, int d
 int ONNXGetEmbeddingDim(ONNXModelHandle h) { (void)h;return 768; }
 ONNXEOF
 gcc -c -fPIC -o /tmp/onnx_stubs.o /tmp/onnx_stubs.c
-ar rcs "${BLOBASE}/kernel/dependency/onnxruntime/comm/lib/libonnx_wrapper.a" /tmp/onnx_stubs.o
+ar rcs binarylibs/kernel/dependency/onnxruntime/comm/lib/libonnx_wrapper.a /tmp/onnx_stubs.o
+
+echo "Building openGauss..."
+# Ensure XGBoost stub header is in place
+mkdir -p binarylibs/kernel/dependency/xgboost/comm/include/xgboost
+echo '// stub' > binarylibs/kernel/dependency/xgboost/comm/include/xgboost/c_api.h
 
 make -j$(nproc) 2>&1 || true
 
