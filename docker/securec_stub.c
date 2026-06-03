@@ -6,11 +6,15 @@
 #include <wchar.h>
 
 typedef int errno_t;
+#define ERANGE_AND_RESET 162
 
 errno_t memcpy_s(void *dest, size_t destMax, const void *src, size_t count)
 {
     if (dest == NULL || src == NULL || destMax == 0) return EINVAL;
-    if (count > destMax) return ERANGE;
+    if (count > destMax) {
+        if (destMax > 0) memcpy(dest, src, destMax);
+        return ERANGE_AND_RESET;
+    }
     memcpy(dest, src, count);
     return 0;
 }
@@ -35,7 +39,11 @@ errno_t strcpy_s(char *strDest, size_t destMax, const char *strSrc)
 {
     if (strDest == NULL || strSrc == NULL || destMax == 0) return EINVAL;
     size_t slen = strlen(strSrc);
-    if (slen >= destMax) return ERANGE;
+    if (slen >= destMax) {
+        memcpy(strDest, strSrc, destMax - 1);
+        strDest[destMax - 1] = '\0';
+        return ERANGE_AND_RESET;
+    }
     strcpy(strDest, strSrc);
     return 0;
 }
@@ -91,19 +99,19 @@ errno_t vsprintf_s(char *strDest, size_t destMax, const char *format, va_list ar
 errno_t snprintf_s(char *strDest, size_t destMax, size_t count, const char *format, ...)
 {
     if (strDest == NULL || destMax == 0 || format == NULL) return EINVAL;
-    size_t real_count = (count > destMax) ? destMax : count;
     va_list args;
     va_start(args, format);
-    int ret = vsnprintf(strDest, real_count, format, args);
+    int ret = vsnprintf(strDest, destMax, format, args);
     va_end(args);
+    if ((size_t)ret >= destMax) { strDest[destMax - 1] = '\0'; return (ret < 0) ? EINVAL : 0; }
     return (ret < 0) ? EINVAL : 0;
 }
 
 errno_t vsnprintf_s(char *strDest, size_t destMax, size_t count, const char *format, va_list arglist)
 {
     if (strDest == NULL || destMax == 0 || format == NULL) return EINVAL;
-    size_t real_count = (count > destMax) ? destMax : count;
-    int ret = vsnprintf(strDest, real_count, format, arglist);
+    int ret = vsnprintf(strDest, destMax, format, arglist);
+    if ((size_t)ret >= destMax) { strDest[destMax - 1] = '\0'; return (ret < 0) ? EINVAL : 0; }
     return (ret < 0) ? EINVAL : 0;
 }
 
