@@ -15,6 +15,15 @@
 #include "utils/zfiles.h"
 
 /* MALLOC api for struct unz_memfunc */
+extern void setUnzipMemoryFunc(void* (*malloc_pf)(size_t), void (*free_pf)(void*));
+
+/* Stub implementation of setUnzipMemoryFunc in case binarylibs doesn't provide it */
+void setUnzipMemoryFunc(void* (*malloc_pf)(size_t), void (*free_pf)(void*))
+{
+    (void)malloc_pf;
+    (void)free_pf;
+}
+
 static voidp memcnxt_palloc(size_t s)
 {
     return palloc(s);

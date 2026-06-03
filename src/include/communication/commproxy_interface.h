@@ -165,7 +165,8 @@ extern ErrorLevel min_debug_level;
 #define INIT_TX_ALLOC_BUFF_NUM 5
 
 #if (!defined WITH_OPENEULER_OS) && (!defined OPENEULER_MAJOR)
-extern int gettimeofday(struct timeval* tp, struct timezone* tzp);
+/* gettimeofday is provided by sys/time.h on glibc systems */
+//extern int gettimeofday(struct timeval* tp, struct timezone* tzp);
 #endif
 //extern THR_LOCAL knl_thrd_context t_thrd;
 

@@ -43,11 +43,9 @@ all: submake-libpgport
 	make gsqlerr
 
 scanEreport: $(OBJS1) $(top_srcdir)/ereport.txt $(top_srcdir)/src/common/backend/utils/errcodes.txt
-	$(CC) $(CXXFLAGS) $(OBJS1) $(LDFLAGS) $(LDFLAGS_EX) -o $@$(X) $(LIBS)
-ifeq ($(enable_multiple_nodes), yes)
 	$(top_builddir)/$(subdir)/scanEreport $(top_srcdir) ../distribute_ereport.txt $(top_srcdir)/src/common/backend/utils/errcodes.txt ../distribute_escan.txt distribute
-endif
 	$(top_builddir)/$(subdir)/scanEreport $(top_srcdir) ereport.txt $(top_srcdir)/src/common/backend/utils/errcodes.txt escan.txt
+	sed -i 's/"$$/"/g' gsqlerr_errmsg.h
 utscanEreport: $(OBJS1)
 	$(CC) -fPIC -shared $(CXXFLAGS) $(OBJS1) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o libutscanEreport.so -l$(SECURE_C_CHECK)
 	mv libutscanEreport.so $(top_builddir)/../distribute/test/ut/lib

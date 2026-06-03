@@ -797,30 +797,30 @@ SUN_STUDIO_CC = @SUN_STUDIO_CC@
 CFLAGS_SSE42 = @CFLAGS_SSE42@
 
 ifeq ($(enable_llt), yes)
-    CFLAGS = @CFLAGS@ $(PTHREAD_CFLAGS) -Wl,-R$(LIBEDIT_LIB_PATH) -fPIC
+    CFLAGS = @CFLAGS@ -fpermissive $(PTHREAD_CFLAGS) -Wl,-R$(LIBEDIT_LIB_PATH) -fPIC
 else
     ifeq ($(POSTGIS_PGSQL_VERSION), 92)
-        CFLAGS = @CFLAGS@ $(PTHREAD_CFLAGS) -fPIC
+        CFLAGS = @CFLAGS@ -fpermissive $(PTHREAD_CFLAGS) -fPIC
     else
         ifeq ($(enable_debug), no)
-           CFLAGS = @CFLAGS@ $(PTHREAD_CFLAGS) -fPIE
+           CFLAGS = @CFLAGS@ -fpermissive $(PTHREAD_CFLAGS) -fPIE
         else
-            CFLAGS = @CFLAGS@ $(PTHREAD_CFLAGS)
+            CFLAGS = @CFLAGS@ -fpermissive $(PTHREAD_CFLAGS)
         endif
     endif
 endif
 
 ifeq ($(enable_llt), no)
     ifeq ($(enable_ut), yes)
-        CFLAGS = @CFLAGS@ -fPIC
+        CFLAGS = @CFLAGS@ -fpermissive -fPIC
     else
         ifeq ($(POSTGIS_PGSQL_VERSION), 92)
-            CFLAGS = @CFLAGS@ -fPIC
+            CFLAGS = @CFLAGS@ -fpermissive -fPIC
         else
             ifeq ($(enable_debug), no)
-                CFLAGS = @CFLAGS@ -fPIE
+                CFLAGS = @CFLAGS@ -fpermissive -fPIE
             else
-                CFLAGS = @CFLAGS@
+                CFLAGS = @CFLAGS@ -fpermissive
             endif
         endif
     endif
@@ -862,6 +862,7 @@ LIBS = @LIBS@
 # append linking lib for OPENSSL
 LIBS += -lssl -lcrypto # append linking lib from Huawei_Secure_C
 LIBS += -l$(SECURE_C_CHECK)
+LIBS += -lstdc++
 # append linking lib for threading
 ifeq ($(enable_debug), no)
 LIBS += -pthread -D_REENTRANT -lrt -pie
@@ -881,6 +882,7 @@ endif
 # append zlib for compression : zlib.a or zlib_pic.a
 ############################################################################
 LIBS += -lz -lminiunz
+LIBS += -llapacke
 
 LDAP_LIBS_FE = @LDAP_LIBS_FE@
 LDAP_LIBS_BE = @LDAP_LIBS_BE@
@@ -964,7 +966,9 @@ else
   ETCD_HOME = $(with_3rd)/$(BINARYPATH)/etcd/comm
 endif
 
+ifneq ($(with_python), no)
 LDFLAGS += -L$(python_libdir)
+endif
 
 #############################################################################
 # libtinfo component

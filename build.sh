@@ -239,9 +239,10 @@ fi
 
 ROOT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 echo "ROOT_DIR : $ROOT_DIR"
-cd build/script
+cd "$ROOT_DIR/script"
 chmod a+x build_opengauss.sh
 ./build_opengauss.sh -m ${build_version_mode} -3rd ${build_binarylib_dir} ${not_optimized} -pkg server ${build_with_tassl} -pm ${product_mode} ${extra_config_opt} -bs ${block_size} ${build_by_cmake} ${cmake_opt_val}
+
 if [ $? -ne 0 ]; then
     echo "build_opengauss.sh failed, aborting."
     exit 1

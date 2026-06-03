@@ -1294,7 +1294,7 @@ restart:
              * that.
              */
             Assert(num_dead_heap_tids >= Max(num_deletable, 1));
-            Assert(num_deletable > 0 || updatable > 0);
+             Assert(num_deletable > 0 || updatable != NULL);
             _bt_delitems_vacuum(rel, buf, deletable, num_deletable, updatable, num_updatable,
                                 0);
 

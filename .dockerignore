@@ -1,0 +1,9 @@
+.git
+.opencode
+build/
+dest/
+package/
+**/make_compile.log
+**/make_package.log
+binarylibs/
+openGauss-third_party_binarylibs_*

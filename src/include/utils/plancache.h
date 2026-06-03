@@ -286,7 +286,7 @@ typedef struct PMGRAction{
     bool is_lock;
     LWLockMode lockmode;
     bool needGenericRoot;
-    PlannerInfo *genericRoot;
+    struct PlannerInfo *genericRoot;
     bool usePartIdx;
     uint8 step;
 }PMGRAction;

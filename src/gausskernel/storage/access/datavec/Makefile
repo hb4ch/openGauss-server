@@ -5,6 +5,7 @@ include $(top_builddir)/src/Makefile.global
 override LIBS := -lonnx_wrapper $(LIBS)
 override LDFLAGS += -L$(TOKENIZERS_LIB_PATH) -L$(ONNXRUNTIME_LIB_PATH)
 override CXXFLAGS := -I$(ONNXRUNTIME_INCLUDE_PATH) $(CXXFLAGS)
+override CXXFLAGS += -mavx512f -mavx512bw -mavx512dq -mavx512cd -mavx512vl -mavx512vpopcntdq -mfma
 
 ifneq "$(MAKECMDGOALS)" "clean"
   ifneq "$(MAKECMDGOALS)" "distclean"

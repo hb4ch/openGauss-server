@@ -3988,10 +3988,12 @@ static int pg_geterrcode_byerrmsg(ErrorData* edata)
 
     for (i = 0; i < lengthof(g_mppdb_errors); i++) {
         for (j = 0; j < lengthof(g_mppdb_errors[i].astErrLocate); j++) {
-            if ((0 == strcmp(g_mppdb_errors[i].astErrLocate[j].szFileName, edata->filename)) &&
-                (g_mppdb_errors[i].astErrLocate[j].ulLineno == (unsigned int)edata->lineno)) {
+            if (g_mppdb_errors[i].astErrLocate[j] != NULL &&
+                (0 == strcmp(g_mppdb_errors[i].astErrLocate[j]->szFileName, edata->filename)) &&
+                (g_mppdb_errors[i].astErrLocate[j]->ulLineno == (unsigned int)edata->lineno)) {
                 return g_mppdb_errors[i].ulSqlErrcode;
-            } else if (0 == strcmp(g_mppdb_errors[i].astErrLocate[j].szFileName, edata->filename)) {
+            } else if (g_mppdb_errors[i].astErrLocate[j] != NULL &&
+                0 == strcmp(g_mppdb_errors[i].astErrLocate[j]->szFileName, edata->filename)) {
                 /* file name is valid or not */
                 szExtName = strrchr(edata->filename, '.');
                 if (NULL == szExtName) {
@@ -4000,7 +4002,7 @@ static int pg_geterrcode_byerrmsg(ErrorData* edata)
 
                 /* *.l file */
                 if ((*(szExtName + 1) == 'l') &&
-                    ((g_mppdb_errors[i].astErrLocate[j].ulLineno + 1) == (unsigned int)edata->lineno)) {
+                    ((g_mppdb_errors[i].astErrLocate[j]->ulLineno + 1) == (unsigned int)edata->lineno)) {
                     return g_mppdb_errors[i].ulSqlErrcode;
                 }
             }
