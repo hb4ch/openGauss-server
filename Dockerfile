@@ -15,49 +15,36 @@ WORKDIR /openGauss-server
 COPY . .
 
 # Build Huawei libsecurec stub
-RUN cd /tmp && mkdir -p securec && cp /openGauss-server/docker/securec_stub.c securec/ && \
-    cd securec && gcc -c -fPIC -o securec_stub.o securec_stub.c && \
-    ar rcs libsecurec.a securec_stub.o && \
-    mkdir -p /usr/local/securec/lib /usr/local/securec/include && \
-    cp libsecurec.a /usr/local/securec/lib/ && \
-    cp /openGauss-server/src/include/securec.h /usr/local/securec/include/ && \
-    cp /openGauss-server/src/include/securectype.h /usr/local/securec/include/ && \
-    rm -rf /tmp/securec
+RUN gcc -c -fPIC -o /tmp/securec_stub.o docker/securec_stub.c && \
+    ar rcs /usr/local/lib/libsecurec.a /tmp/securec_stub.o && \
+    mkdir -p /usr/local/include/securec && \
+    cp src/include/securec.h src/include/securectype.h /usr/local/include/securec/
 
-# Build DCF stub library (eliminates binarylibs dependency)
-RUN cd /tmp && mkdir -p dcf && cp /openGauss-server/docker/libdcf_stub.c dcf/ && \
-    cd dcf && gcc -c -fPIC -o libdcf_stub.o libdcf_stub.c && \
-    gcc -shared -o libdcf.so libdcf_stub.o && \
-    mkdir -p /usr/local/dcf/lib && \
-    cp libdcf.so /usr/local/dcf/lib/ && \
-    rm -rf /tmp/dcf
-COPY docker/dcf_interface.h /usr/local/dcf/include/dcf_interface.h
+# Build DCF stub shared library
+RUN gcc -c -fPIC -o /tmp/libdcf_stub.o docker/libdcf_stub.c && \
+    gcc -shared -o /usr/local/lib/libdcf.so /tmp/libdcf_stub.o && \
+    cp docker/dcf_interface.h /usr/local/include/dcf_interface.h
 
-# Set up binarylibs compatibility structure for Makefile paths
-RUN mkdir -p /openGauss-server/binarylibs/kernel/platform/Huawei_Secure_C/comm/lib \
-    && mkdir -p /openGauss-server/binarylibs/kernel/platform/Huawei_Secure_C/comm/include \
-    && ln -sf /usr/local/securec/lib/libsecurec.a /openGauss-server/binarylibs/kernel/platform/Huawei_Secure_C/comm/lib/libsecurec.a \
-    && ln -sf /usr/local/securec/include/securec.h /openGauss-server/binarylibs/kernel/platform/Huawei_Secure_C/comm/include/securec.h \
-    && ln -sf /usr/local/securec/include/securectype.h /openGauss-server/binarylibs/kernel/platform/Huawei_Secure_C/comm/include/securectype.h \
-    && mkdir -p /openGauss-server/binarylibs/component/dcf/include \
-    && mkdir -p /openGauss-server/binarylibs/component/dcf/lib \
-    && ln -sf /usr/local/dcf/include/dcf_interface.h /openGauss-server/binarylibs/component/dcf/include/dcf_interface.h \
-    && ln -sf /usr/local/dcf/lib/libdcf.so /openGauss-server/binarylibs/component/dcf/lib/libdcf.so \
-    && mkdir -p /openGauss-server/binarylibs/kernel/dependency/zlib1.2.12/comm/lib \
-    && mkdir -p /openGauss-server/binarylibs/kernel/dependency/zlib1.2.12/comm/include \
-    && ln -sf /usr/lib/x86_64-linux-gnu/libminizip.a /openGauss-server/binarylibs/kernel/dependency/zlib1.2.12/comm/lib/libminiunz.a \
-    && ln -sf /usr/include/minizip/unzip.h /openGauss-server/binarylibs/kernel/dependency/zlib1.2.12/comm/include/unzip.h \
-    && ln -sf /usr/include/minizip/ioapi.h /openGauss-server/binarylibs/kernel/dependency/zlib1.2.12/comm/include/ioapi.h \
-    && mkdir -p /openGauss-server/binarylibs/kernel/dependency/xgboost/comm/include/xgboost \
-    && echo '// stub' > /openGauss-server/binarylibs/kernel/dependency/xgboost/comm/include/xgboost/c_api.h \
-    && ln -sf zlib1.2.12 /openGauss-server/binarylibs/kernel/dependency/zlib1.2.11
+# Wire stubs into binarylibs directory structure (committed in repo)
+RUN ln -sf /usr/local/lib/libsecurec.a binarylibs/kernel/platform/Huawei_Secure_C/comm/lib/libsecurec.a && \
+    ln -sf /usr/local/include/securec/securec.h binarylibs/kernel/platform/Huawei_Secure_C/comm/include/securec.h && \
+    ln -sf /usr/local/include/securec/securectype.h binarylibs/kernel/platform/Huawei_Secure_C/comm/include/securectype.h && \
+    ln -sf /usr/local/include/dcf_interface.h binarylibs/kernel/component/dcf/include/dcf_interface.h && \
+    ln -sf /usr/local/lib/libdcf.so binarylibs/kernel/component/dcf/lib/libdcf.so && \
+    ln -sf /usr/lib/x86_64-linux-gnu/libminizip.a binarylibs/kernel/dependency/zlib1.2.12/comm/lib/libminiunz.a && \
+    ln -sf /usr/include/minizip/unzip.h binarylibs/kernel/dependency/zlib1.2.12/comm/include/unzip.h && \
+    ln -sf /usr/include/minizip/ioapi.h binarylibs/kernel/dependency/zlib1.2.12/comm/include/ioapi.h && \
+    ln -sf zlib1.2.12 binarylibs/kernel/dependency/zlib1.2.11 && \
+    mkdir -p binarylibs/component/dcf/include && \
+    ln -sf /usr/local/include/dcf_interface.h binarylibs/component/dcf/include/dcf_interface.h && \
+    mkdir -p binarylibs/component/dcf/lib && \
+    ln -sf /usr/local/lib/libdcf.so binarylibs/component/dcf/lib/libdcf.so
 
-RUN chmod +x build_ubuntu.sh
-RUN ./build_ubuntu.sh
+RUN chmod +x build_ubuntu.sh && ./build_ubuntu.sh
 
 ENV GAUSSHOME=/openGauss-server/dest
 ENV PATH=$GAUSSHOME/bin:$PATH
-ENV LD_LIBRARY_PATH=$GAUSSHOME/lib:$GAUSSHOME/../binarylibs/kernel/component/dcf/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=$GAUSSHOME/lib:/usr/local/lib:$LD_LIBRARY_PATH
 ENV PGDATA=/var/lib/opengauss/data
 
 COPY docker/dockerfiles/7.0.0-RC2/entrypoint.sh /entrypoint.sh
