@@ -58,6 +58,10 @@ if [ ! -f /usr/local/lib/libdcf.so ]; then
 fi
 
 # 2. Wire stubs into binarylibs (idempotent)
+mkdir -p binarylibs/kernel/platform/Huawei_Secure_C/comm/lib binarylibs/kernel/platform/Huawei_Secure_C/comm/include \
+    binarylibs/kernel/component/dcf/include binarylibs/kernel/component/dcf/lib \
+    binarylibs/component/dcf/include binarylibs/component/dcf/lib \
+    binarylibs/kernel/dependency/zlib1.2.12/comm/lib binarylibs/kernel/dependency/zlib1.2.12/comm/include
 ln -sf /usr/local/lib/libsecurec.a    binarylibs/kernel/platform/Huawei_Secure_C/comm/lib/libsecurec.a
 ln -sf /usr/local/include/securec/securec.h    binarylibs/kernel/platform/Huawei_Secure_C/comm/include/securec.h
 ln -sf /usr/local/include/securec/securectype.h binarylibs/kernel/platform/Huawei_Secure_C/comm/include/securectype.h
