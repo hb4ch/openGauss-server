@@ -1,1 +1,0 @@
-/usr/local/include/securec/securectype.h
