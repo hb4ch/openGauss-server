@@ -34,7 +34,7 @@ fi
 
 # --- Fast path: just run make ---
 if [ "$1" = "make" ]; then
-    docker exec -w /openGauss-server "$CONTAINER" make -j$(nproc) 2>&1 | tail -20
+    docker exec -w /openGauss-server "$CONTAINER" make -j6 2>&1 | tail -20
     docker exec -w /openGauss-server "$CONTAINER" make install 2>&1 | tail -5
     exit 0
 fi
@@ -61,7 +61,9 @@ fi
 mkdir -p binarylibs/kernel/platform/Huawei_Secure_C/comm/lib binarylibs/kernel/platform/Huawei_Secure_C/comm/include \
     binarylibs/kernel/component/dcf/include binarylibs/kernel/component/dcf/lib \
     binarylibs/component/dcf/include binarylibs/component/dcf/lib \
-    binarylibs/kernel/dependency/zlib1.2.12/comm/lib binarylibs/kernel/dependency/zlib1.2.12/comm/include
+    binarylibs/kernel/dependency/zlib1.2.12/comm/lib binarylibs/kernel/dependency/zlib1.2.12/comm/include \
+    binarylibs/kernel/dependency/xgboost/comm/lib64 binarylibs/kernel/dependency/xgboost/comm/include/xgboost
+echo '// stub' > binarylibs/kernel/dependency/xgboost/comm/include/xgboost/c_api.h
 ln -sf /usr/local/lib/libsecurec.a    binarylibs/kernel/platform/Huawei_Secure_C/comm/lib/libsecurec.a
 ln -sf /usr/local/include/securec/securec.h    binarylibs/kernel/platform/Huawei_Secure_C/comm/include/securec.h
 ln -sf /usr/local/include/securec/securectype.h binarylibs/kernel/platform/Huawei_Secure_C/comm/include/securectype.h
@@ -105,14 +107,14 @@ ar rcs binarylibs/kernel/dependency/tokenizers/comm/lib/libtokenizers.a /tmp/tok
 
 # 5. Configure
 if [ ! -f config.status ]; then
-    ./configure --prefix=/openGauss-server/dest --enable-debug --enable-cassert \
+    CC="ccache gcc" CXX="ccache g++" ./configure --prefix=/openGauss-server/dest --enable-debug --enable-cassert \
         --disable-thread-safety --with-readline --enable-lite-mode \
         --disable-llvm --without-python --without-gssapi
 fi
 
 # 6. Build & install
 echo ">>> Compiling (first time ~30-40 min, incremental is fast)..."
-make -j$(nproc) 2>&1 | tail -10
+CC="ccache gcc" CXX="ccache g++" make -j6 2>&1 | tail -10
 make install 2>&1 | tail -5
 echo ">>> Build complete"
 '

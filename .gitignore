@@ -23,3 +23,20 @@ objfiles.txt
 
 /build/script/version.cfg
 /cmake_build
+/dest/
+/src/common/backend/utils/adt/jsonpath_gram.cpp
+/src/common/backend/utils/adt/jsonpath_gram.hpp
+/src/common/backend/utils/adt/lex.backup
+/src/common/interfaces/ecpg/preproc/
+/src/common/pl/plpgsql/src/pl_reserved_kwlist_d.h
+/src/common/pl/plpgsql/src/pl_unreserved_kwlist_d.h
+/src/include/parser/kwlist_d.h
+/src/lib/cm_common/cm_errcodes.h
+/src/lib/page_compression/
+/src/include/cm/cm_errcodes.h
+/src/lib/elog/elog.h
+*.a
+*.o
+*.so
+*.so.[0-9]
+*.so.[0-9].[0-9]

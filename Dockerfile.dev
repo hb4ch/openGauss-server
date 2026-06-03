@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CCACHE_DIR=/ccache
-ENV MAKEFLAGS="-j$(nproc)"
+ENV MAKEFLAGS="-j6"
 ENV GAUSSHOME=/openGauss-server/dest
 ENV PATH=$GAUSSHOME/bin:$PATH
 ENV LD_LIBRARY_PATH=$GAUSSHOME/lib:/usr/local/lib:$LD_LIBRARY_PATH
