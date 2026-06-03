@@ -1,0 +1,26 @@
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CCACHE_DIR=/ccache
+ENV MAKEFLAGS="-j$(nproc)"
+ENV GAUSSHOME=/openGauss-server/dest
+ENV PATH=$GAUSSHOME/bin:$PATH
+ENV LD_LIBRARY_PATH=$GAUSSHOME/lib:/usr/local/lib:$LD_LIBRARY_PATH
+
+# Use Tsinghua apt mirror for faster downloads in China
+RUN sed -i 's@archive.ubuntu.com@mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.list && \
+    sed -i 's@security.ubuntu.com@mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.list && \
+    apt-get update && apt-get install -y \
+    build-essential cmake flex bison libreadline-dev zlib1g-dev \
+    libxml2-dev libxslt1-dev libssl-dev libaio-dev libncurses5-dev \
+    libedit-dev pkg-config wget curl git python3 python3-dev \
+    python-is-python3 uuid-dev libnuma-dev libkrb5-dev libcgroup-dev \
+    libboost-dev libzstd-dev libcurl4-openssl-dev libcjson-dev \
+    libopenblas-dev libminizip-dev liblz4-dev unixodbc-dev liblapacke-dev \
+    ccache \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create mount points
+RUN mkdir -p /openGauss-server /ccache && \
+    groupadd dbgrp && useradd -g dbgrp -m -s /bin/bash omm
+
+WORKDIR /openGauss-server

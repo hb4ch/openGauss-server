@@ -1,0 +1,24 @@
+# Makefile for building inside Docker container
+# Usage: make -f Makefile.docker [target]
+
+CONTAINER = og-builder
+
+.PHONY: build make install sql shell
+
+build:
+	./docker_build.sh
+
+make:
+	./docker_build.sh make
+
+install:
+	docker exec -w /openGauss-server $(CONTAINER) make install
+
+sql:
+	./docker_build.sh sql
+
+shell:
+	docker exec -it $(CONTAINER) bash
+
+stop:
+	docker stop $(CONTAINER) 2>/dev/null; docker rm $(CONTAINER) 2>/dev/null; true
