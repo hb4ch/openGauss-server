@@ -3,7 +3,14 @@
 build/
 dest/
 package/
+doc/
+src/test/
+src/tools/
 **/make_compile.log
 **/make_package.log
-binarylibs/
-openGauss-third_party_binarylibs_*
+**/*.o
+**/*.a
+**/*.so
+**/core
+**/__pycache__
+**/*.pyc
