@@ -2151,7 +2151,6 @@ static void setup_depend(void)
  */
 static void setup_sysviews(void)
 {
-    return;  // FIXME: disabled
     PG_CMD_DECL;
     char** line;
     char** sysviews_setup;
@@ -2188,7 +2187,6 @@ static void setup_sysviews(void)
  */
 static void setup_perfviews(void)
 {
-    return;  // FIXME: disabled
     PG_CMD_DECL;
     char** line;
     char** perfviews_setup;
@@ -2200,11 +2198,16 @@ static void setup_perfviews(void)
     perfviews_setup = readfile(performance_views_file);
 
     /*
-     * We use -j here to avoid backslashing stuff in performance_views.sql
+     * We use -j here to avoid backslashing stuff in system_views.sql
+     * Libregauss: no exit_on_error so we can see the actual error message
      */
     nRet = snprintf_s(
-        cmd, sizeof(cmd), sizeof(cmd) - 1, "\"%s\" %s -j template1 >%s 2>&1", backend_exec, backend_options, DEVNULL);
+        cmd, sizeof(cmd), sizeof(cmd) - 1, "\"%s\" --single --localxid -F -O -c search_path=pg_catalog -j template1 >/tmp/setup_sysviews_all.log 2>&1", backend_exec);
     securec_check_ss_c(nRet, "\0", "\0");
+
+    fprintf(stdout, "CMD=[%s]\n", cmd);
+    (void)fflush(stdout);
+
 
     PG_CMD_OPEN;
 
@@ -5094,6 +5097,7 @@ int main(int argc, char* argv[])
         setup_privsysviews();
 #endif
         setup_perfviews();
+#endif
 
 #ifdef PGXC
         /* Initialize catalog information about the node self */
@@ -5132,7 +5136,6 @@ int main(int argc, char* argv[])
         vacuumfreeze("template0");
         vacuumfreeze("template1");
         vacuumfreeze("postgres");
-#endif
 #endif
     }
 
