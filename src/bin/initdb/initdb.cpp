@@ -2162,20 +2162,32 @@ static void setup_sysviews(void)
     sysviews_setup = readfile(system_views_file);
 
     /*
-     * We use -j here to avoid backslashing stuff in system_views.sql
+     * We use -j here to avoid backslashing stuff in system_views.sql.
+     * Write SQL to a temp file and redirect stdin to avoid pipe buffering issues.
      */
-    nRet = snprintf_s(
-        cmd, sizeof(cmd), sizeof(cmd) - 1, "\"%s\" %s -j template1 >%s 2>&1", backend_exec, backend_options, DEVNULL);
-    securec_check_ss_c(nRet, "\0", "\0");
+    {
+        FILE* tmpf = fopen("/tmp/.libregauss_sysviews.sql", "w");
+        if (tmpf == NULL) {
+            write_stderr("Cannot create temporary file\n");
+            exit_nicely();
+        }
+        for (char** lp = sysviews_setup; *lp; lp++) {
+            fputs(*lp, tmpf);
+            FREE_AND_RESET(*lp);
+        }
+        fclose(tmpf);
 
-    PG_CMD_OPEN;
+        nRet = snprintf_s(
+            cmd, sizeof(cmd), sizeof(cmd) - 1,
+            "\"%s\" %s -j template1 < /tmp/.libregauss_sysviews.sql >%s 2>&1",
+            backend_exec, backend_options, DEVNULL);
+        securec_check_ss_c(nRet, "\0", "\0");
 
-    for (line = sysviews_setup; *line != NULL; line++) {
-        PG_CMD_PUTS(*line);
-        FREE_AND_RESET(*line);
+        PG_CMD_OPEN;
+        PG_CMD_CLOSE;
+
+        unlink("/tmp/.libregauss_sysviews.sql");
     }
-
-    PG_CMD_CLOSE;
 
     FREE_AND_RESET(sysviews_setup);
 
@@ -2680,7 +2692,7 @@ static void setup_dictionary(void)
     (void)fflush(stdout);
 
     /*
-     * We use -j here to avoid backslashing stuff
+     * We use -j here to avoid backslashing stuff in system_views.sql
      */
     nRet = snprintf_s(
         cmd, sizeof(cmd), sizeof(cmd) - 1, "\"%s\" %s -j template1 >%s 2>&1", backend_exec, backend_options, DEVNULL);
@@ -5091,13 +5103,11 @@ int main(int argc, char* argv[])
 
         setup_depend();
         load_plpgsql();
-#if 0
         setup_sysviews();
 #ifdef ENABLE_PRIVATEGAUSS
         setup_privsysviews();
 #endif
         setup_perfviews();
-#endif
 
 #ifdef PGXC
         /* Initialize catalog information about the node self */
