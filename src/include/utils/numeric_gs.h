@@ -215,9 +215,8 @@ inline Datum makeNumeric128(int128 value, uint8 scale, ScalarVector *arr = NULL)
     }
     SET_VARSIZE(result, NUMERIC_128SZ);
     result->choice.n_header = NUMERIC_128 + scale;
-    errno_t rc = EOK;
-    rc = memcpy_s(result->choice.n_bi.n_data, sizeof(int128), &value, sizeof(int128));
-    securec_check(rc, "\0", "\0") return (Datum)result;
+    memcpy(result->choice.n_bi.n_data, &value, sizeof(int128));
+    return (Datum)result;
 }
 
 /* Convert bi64 or bi128 to short numeric */

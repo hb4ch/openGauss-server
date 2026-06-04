@@ -326,16 +326,16 @@ typedef struct FormatCallStack {
 #undef securec_check_ss
 #undef securec_check_c
 #undef securec_check_ss_c
-#define securec_check(errno, charList, ...)              ((void)(errno), (void)(charList))
-#define securec_check_ss(errno, charList, ...)           ((void)(errno), (void)(charList))
-#define securec_check_c(errno, str1, str2)               ((void)(errno), (void)(str1), (void)(str2))
-#define securec_check_ss_c(errno, str1, str2)            ((void)(errno), (void)(str1), (void)(str2))
+#define securec_check(errno, charList, ...)              { ((void)(errno), (void)(charList)); }
+#define securec_check_ss(errno, charList, ...)           { ((void)(errno), (void)(charList)); }
+#define securec_check_c(errno, str1, str2)               { ((void)(errno), (void)(str1), (void)(str2)); }
+#define securec_check_ss_c(errno, str1, str2)            { ((void)(errno), (void)(str1), (void)(str2)); }
 
 /* Only used in sprintf_s or scanf_s cluster function */
 /* LibreGauss: no-op for all variants */
 
 #undef securec_check_ss
-#define securec_check_ss(errno, charList, ...)           ((void)(errno), (void)(charList))
+#define securec_check_ss(errno, charList, ...)           { ((void)(errno), (void)(charList)); }
 
 /* ----------
  * API for catching ereport(ERROR) exits.  Use these macros like so:

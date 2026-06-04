@@ -173,8 +173,7 @@ text* cstring_to_text_with_len(const char* s, size_t len)
 
     SET_VARSIZE(result, len + VARHDRSZ);
     if (len > 0) {
-        int rc = memcpy_s(VARDATA(result), len, s, len);
-        securec_check(rc, "\0", "\0");
+        memcpy(VARDATA(result), s, len);
     }
     return result;
 }

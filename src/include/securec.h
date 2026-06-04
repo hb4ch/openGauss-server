@@ -29,6 +29,11 @@ typedef int errno_t;
 #define ERANGE_AND_RESET 162
 #define EOVERLAP_AND_RESET 182
 
+/* Legacy aliases still used in the codebase */
+#define strcpy_sp(d, dm, s)          snprintf((d), (dm), "%s", (s))
+#define strncpy_sp(d, dm, s, c)      snprintf((d), (dm), "%s", (s))
+#define securec_check_for_sscanf_s(ret, n, s1, s2) ((void)(ret), (void)(n), (void)(s1), (void)(s2))
+
 /* ---- Memory: copy min(c, dm) bytes, return 0 / ERANGE_AND_RESET ---- */
 static inline errno_t memcpy_s(void *d, size_t dm, const void *s, size_t c) {
     if (c <= dm) { memcpy(d, s, c); return 0; }
