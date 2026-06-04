@@ -616,7 +616,7 @@ int main(int argc, char* argv[])
         }
 #endif
 
-        if (pset.db->sock < 0) {
+        if (PQstatus(pset.db) != CONNECTION_OK) {
             fprintf(stderr,
                 "failed to connect %s:%s.\n",
                 pset.db->pghost == NULL ? "Unknown" : pset.db->pghost,
