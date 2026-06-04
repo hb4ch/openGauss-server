@@ -2162,20 +2162,58 @@ static void setup_sysviews(void)
     sysviews_setup = readfile(system_views_file);
 
     /*
-     * We use -j here to avoid backslashing stuff in system_views.sql
+     * Split the SQL into individual statements and execute each one
+     * separately so a failure in one doesn't roll back others.
      */
-    nRet = snprintf_s(
-        cmd, sizeof(cmd), sizeof(cmd) - 1, "\"%s\" %s -j template1 >%s 2>&1", backend_exec, backend_options, DEVNULL);
-    securec_check_ss_c(nRet, "\0", "\0");
+    {
+        /* Concatenate all lines */
+        size_t total = 0;
+        for (char** lp = sysviews_setup; *lp; lp++)
+            total += strlen(*lp);
+        char* bigbuf = (char*)pg_malloc(total + 2);
+        bigbuf[0] = '\0';
+        for (char** lp = sysviews_setup; *lp; lp++) {
+            strcat(bigbuf, *lp);
+            FREE_AND_RESET(*lp);
+        }
+        FREE_AND_RESET(sysviews_setup);
 
-    PG_CMD_OPEN;
+        /* Write each statement (split by top-level ; outside $$) to a file */
+        FILE* tmpf = fopen("/tmp/.lg_vw.sql", "w");
+        if (tmpf == NULL) {
+            write_stderr("Cannot create temp file\n");
+            exit_nicely();
+        }
+        int dollar_depth = 0;
+        char* p = bigbuf;
+        char* start = p;
+        while (*p) {
+            if (p[0] == '$' && p[1] == '$') { dollar_depth = !dollar_depth; p += 2; continue; }
+            if (dollar_depth == 0 && *p == ';') {
+                *p = '\0';
+                /* Write the wrapped statement */
+                fprintf(tmpf, "BEGIN;\n%s\nCOMMIT;\n", start);
+                p++;
+                start = p;
+                continue;
+            }
+            p++;
+        }
+        size_t rem = strlen(start);
+        if (rem > 1) { fprintf(tmpf, "BEGIN;\n%s;\nCOMMIT;\n", start); }
+        fclose(tmpf);
+        free(bigbuf);
 
-    for (line = sysviews_setup; *line != NULL; line++) {
-        PG_CMD_PUTS(*line);
-        FREE_AND_RESET(*line);
+        /* Execute the wrapped SQL via temp file */
+        nRet = snprintf_s(cmd, sizeof(cmd), sizeof(cmd) - 1,
+            "\"%s\" %s -j template1 < /tmp/.lg_vw.sql >%s 2>&1",
+            backend_exec, backend_options, DEVNULL);
+        securec_check_ss_c(nRet, "\0", "\0");
+
+        PG_CMD_OPEN;
+        PG_CMD_CLOSE;
+        unlink("/tmp/.lg_vw.sql");
     }
-
-    PG_CMD_CLOSE;
 
     FREE_AND_RESET(sysviews_setup);
 
