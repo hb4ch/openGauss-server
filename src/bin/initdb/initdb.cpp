@@ -2162,32 +2162,20 @@ static void setup_sysviews(void)
     sysviews_setup = readfile(system_views_file);
 
     /*
-     * We use -j here to avoid backslashing stuff in system_views.sql.
-     * Write SQL to a temp file and redirect stdin to avoid pipe buffering issues.
+     * We use -j here to avoid backslashing stuff in system_views.sql
      */
-    {
-        FILE* tmpf = fopen("/tmp/.libregauss_sysviews.sql", "w");
-        if (tmpf == NULL) {
-            write_stderr("Cannot create temporary file\n");
-            exit_nicely();
-        }
-        for (char** lp = sysviews_setup; *lp; lp++) {
-            fputs(*lp, tmpf);
-            FREE_AND_RESET(*lp);
-        }
-        fclose(tmpf);
+    nRet = snprintf_s(
+        cmd, sizeof(cmd), sizeof(cmd) - 1, "\"%s\" %s -j template1 >%s 2>&1", backend_exec, backend_options, DEVNULL);
+    securec_check_ss_c(nRet, "\0", "\0");
 
-        nRet = snprintf_s(
-            cmd, sizeof(cmd), sizeof(cmd) - 1,
-            "\"%s\" %s -j template1 < /tmp/.libregauss_sysviews.sql >%s 2>&1",
-            backend_exec, backend_options, DEVNULL);
-        securec_check_ss_c(nRet, "\0", "\0");
+    PG_CMD_OPEN;
 
-        PG_CMD_OPEN;
-        PG_CMD_CLOSE;
-
-        unlink("/tmp/.libregauss_sysviews.sql");
+    for (line = sysviews_setup; *line != NULL; line++) {
+        PG_CMD_PUTS(*line);
+        FREE_AND_RESET(*line);
     }
+
+    PG_CMD_CLOSE;
 
     FREE_AND_RESET(sysviews_setup);
 
