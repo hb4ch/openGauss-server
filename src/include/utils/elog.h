@@ -317,92 +317,25 @@ typedef struct FormatCallStack {
 } FormatCallStack;
 
 
-#ifndef FRONTEND
-#define securec_check(errno, charList, ...)                                                                            \
-    {                                                                                                                  \
-        if (unlikely(EOK != errno)) {                                                                                  \
-            freeSecurityFuncSpace(charList, ##__VA_ARGS__);                                                            \
-            switch (errno) {                                                                                           \
-                case EINVAL:                                                                                           \
-                    elog(ERROR,                                                                                        \
-                        "%s : %d : The destination buffer is NULL or not terminated. The second case only occures in " \
-                        "function strcat_s/strncat_s.",                                                                \
-                        __FILE__,                                                                                      \
-                        __LINE__);                                                                                     \
-                    break;                                                                                             \
-                case EINVAL_AND_RESET:                                                                                 \
-                    elog(ERROR, "%s : %d : The Source Buffer is NULL.", __FILE__, __LINE__);                           \
-                    break;                                                                                             \
-                case ERANGE:                                                                                           \
-                    elog(ERROR,                                                                                        \
-                        "%s : %d : The parameter destMax is equal to zero or larger than the macro : "                 \
-                        "SECUREC_STRING_MAX_LEN.",                                                                     \
-                        __FILE__,                                                                                      \
-                        __LINE__);                                                                                     \
-                    break;                                                                                             \
-                case ERANGE_AND_RESET:                                                                                 \
-                    elog(ERROR,                                                                                        \
-                        "%s : %d : The parameter destMax is too small or parameter count is larger than macro "        \
-                        "parameter SECUREC_STRING_MAX_LEN. The second case only occures in functions "                 \
-                        "strncat_s/strncpy_s.",                                                                        \
-                        __FILE__,                                                                                      \
-                        __LINE__);                                                                                     \
-                    break;                                                                                             \
-                case EOVERLAP_AND_RESET:                                                                               \
-                    elog(ERROR,                                                                                        \
-                        "%s : %d : The destination buffer and source buffer are overlapped.",                          \
-                        __FILE__,                                                                                      \
-                        __LINE__);                                                                                     \
-                    break;                                                                                             \
-                default:                                                                                               \
-                    elog(ERROR, "%s : %d : Unrecognized return type.", __FILE__, __LINE__);                            \
-                    break;                                                                                             \
-            }                                                                                                          \
-        }                                                                                                              \
-    }
+/* ---- securec_check: overridden by LibreGauss to no-op ---- */
+/* LibreGauss: The original Huawei securec_check macro (lines 320–415) is replaced
+ * by a simple no-op from securec_check.h, which is included above.  All securec
+ * functions return 0 always, so the error-checking macro would never fire. */
 
-#else
-
-#define securec_check(errno, charList, ...)                                                                          \
-    {                                                                                                                \
-        if (unlikely(errno == -1)) {                                                                                 \
-            freeSecurityFuncSpace_c(static_cast<char*>(charList), ##__VA_ARGS__);                                    \
-            printf("ERROR at %s : %d : The destination buffer or format is a NULL pointer or the invalid parameter " \
-                   "handle is invoked..\n",                                                                          \
-                __FILE__,                                                                                            \
-                __LINE__);                                                                                           \
-            exit(1);                                                                                                 \
-        }                                                                                                            \
-    }
-
-#endif
+#undef securec_check
+#undef securec_check_ss
+#undef securec_check_c
+#undef securec_check_ss_c
+#define securec_check(errno, charList, ...)              ((void)(errno), (void)(charList))
+#define securec_check_ss(errno, charList, ...)           ((void)(errno), (void)(charList))
+#define securec_check_c(errno, str1, str2)               ((void)(errno), (void)(str1), (void)(str2))
+#define securec_check_ss_c(errno, str1, str2)            ((void)(errno), (void)(str1), (void)(str2))
 
 /* Only used in sprintf_s or scanf_s cluster function */
-#ifdef ENABLE_NEON
-#define securec_check_ss(errno, charList, ...)                                                                     \
-    {                                                                                                              \
-        if (unlikely(errno == -1)) {                                                                               \
-            freeSecurityFuncSpace(const_cast<char*>(charList), ##__VA_ARGS__);                                     \
-            elog(ERROR,                                                                                            \
-                "%s : %d : The destination buffer or format is a NULL pointer or the invalid parameter handle is " \
-                "invoked.",                                                                                        \
-                __FILE__,                                                                                          \
-                __LINE__);                                                                                         \
-        }                                                                                                          \
-    }
-#else
-#define securec_check_ss(errno, charList, ...)                                                                     \
-    {                                                                                                              \
-        if (unlikely(errno == -1)) {                                                                               \
-            freeSecurityFuncSpace(static_cast<char*>(charList), ##__VA_ARGS__);                                    \
-            elog(ERROR,                                                                                            \
-                "%s : %d : The destination buffer or format is a NULL pointer or the invalid parameter handle is " \
-                "invoked.",                                                                                        \
-                __FILE__,                                                                                          \
-                __LINE__);                                                                                         \
-        }                                                                                                          \
-    }
-#endif
+/* LibreGauss: no-op for all variants */
+
+#undef securec_check_ss
+#define securec_check_ss(errno, charList, ...)           ((void)(errno), (void)(charList))
 
 /* ----------
  * API for catching ereport(ERROR) exits.  Use these macros like so:

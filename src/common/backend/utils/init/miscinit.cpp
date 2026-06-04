@@ -1250,11 +1250,9 @@ static void CreatePidLockFile(const char* filename)
 /* Get tgid of input process id */
 pid_t getProcessTgid(pid_t pid)
 {
-#define TGID_ITEM_NUM 2
     char pid_path[MAXPGPATH];
     FILE *fp = NULL;
     char getBuff[MAXPGPATH];
-    char paraName[MAXPGPATH];
     pid_t tgid = InvalidPid;
     int rc;
 
@@ -1270,7 +1268,7 @@ pid_t getProcessTgid(pid_t pid)
     /* parse process's status file */
     while (fgets(getBuff, MAXPGPATH, fp) != NULL) {
         if (strstr(getBuff, "Tgid:") != NULL &&
-            sscanf_s(getBuff, "%s   %d", paraName, MAXPGPATH, &tgid) == TGID_ITEM_NUM) {
+            sscanf(getBuff, "%*s %d", &tgid) == 1) {
             break;
         } else {
             tgid = InvalidPid;

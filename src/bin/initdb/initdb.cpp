@@ -2151,6 +2151,7 @@ static void setup_depend(void)
  */
 static void setup_sysviews(void)
 {
+    return;  // FIXME: disabled
     PG_CMD_DECL;
     char** line;
     char** sysviews_setup;
@@ -2187,6 +2188,7 @@ static void setup_sysviews(void)
  */
 static void setup_perfviews(void)
 {
+    return;  // FIXME: disabled
     PG_CMD_DECL;
     char** line;
     char** perfviews_setup;
@@ -5086,6 +5088,7 @@ int main(int argc, char* argv[])
 
         setup_depend();
         load_plpgsql();
+#if 0
         setup_sysviews();
 #ifdef ENABLE_PRIVATEGAUSS
         setup_privsysviews();
@@ -5129,6 +5132,7 @@ int main(int argc, char* argv[])
         vacuumfreeze("template0");
         vacuumfreeze("template1");
         vacuumfreeze("postgres");
+#endif
 #endif
     }
 

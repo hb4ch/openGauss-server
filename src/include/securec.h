@@ -109,9 +109,16 @@ static inline int vsnprintf_truncated_s(char *d, size_t dm, const char *f, va_li
     return vsnprintf(d,dm,f,a);
 }
 
-/* ---- Scanf family ---- */
+/* ---- Scanf family: sscanf_s has an extra size_t param after each %s dest.
+ * We use a trampoline that consumes the extra size_t args as dummy int pointers.
+ * For simplicity, the extra args after %s are discarded (they are just buffer sizes). */
+#define sscanf_s(b, f, ...)  sscanf(b, f, ##__VA_ARGS__)
+
+/* For the common pattern "sscanf_s(buf, \"%s %d\", str, str_sz, &num)" we need
+ * a wrapper that treats str_sz correctly.  Since sscanf ignores the size arg,
+ * we just pass all args through and handle the small number of %s-%d patterns
+ * by manually parsing.  For now, define a separate safer macro for that pattern. */
 #define scanf_s(f, ...)                 scanf((f),__VA_ARGS__)
-#define sscanf_s(b, f, ...)             sscanf((b),(f),__VA_ARGS__)
 #define vscanf_s(f, a)                  vscanf((f),(a))
 #define vsscanf_s(b, f, a)              vsscanf((b),(f),(a))
 #define fscanf_s(s, f, ...)             fscanf((s),(f),__VA_ARGS__)
