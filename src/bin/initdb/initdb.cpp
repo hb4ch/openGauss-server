@@ -1905,8 +1905,11 @@ static void setup_auth(void)
     (void)fflush(stdout);
 
     nRet = snprintf_s(
-        cmd, sizeof(cmd), sizeof(cmd) - 1, "\"%s\" %s template1 >%s 2>&1", backend_exec, backend_options, DEVNULL);
+        cmd, sizeof(cmd), sizeof(cmd) - 1, "\"%s\" %s template1 >/tmp/setup_auth_out.log 2>/tmp/setup_auth_err.log", backend_exec, backend_options);
     securec_check_ss_c(nRet, "\0", "\0");
+
+    fprintf(stdout, "CMD=[%s]\n", cmd);
+    (void)fflush(stdout);
 
     PG_CMD_OPEN;
 

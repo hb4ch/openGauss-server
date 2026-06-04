@@ -59,11 +59,14 @@ static inline errno_t strcpy_s(char *d, size_t dm, const char *s) {
     memcpy(d, s, sl+1);
     return 0;
 }
-static inline errno_t strncpy_s(char *d, size_t dm, const char *s, size_t c) {
-    size_t sl = (c < dm) ? strnlen(s, c) : strnlen(s, dm-1);
-    if (sl >= dm) { if (dm > 0) { memcpy(d, s, dm-1); d[dm-1] = 0; } return ERANGE_AND_RESET; }
-    memcpy(d, s, sl+1);
-    if (c > sl+1) memset(d+sl+1, 0, c-sl-1);
+static inline errno_t strncpy_s(char *d, size_t dm, const char *s, size_t c)
+{
+    if (dm == 0) return 0;
+    size_t cp = (c < dm - 1) ? c : (dm - 1);
+    const char *src = s ? s : "";
+    size_t i = 0;
+    while (i < cp && src[i] != '\0') { d[i] = src[i]; i++; }
+    d[i] = '\0';
     return 0;
 }
 static inline errno_t strcat_s(char *d, size_t dm, const char *s) {
